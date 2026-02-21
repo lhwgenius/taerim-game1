@@ -304,7 +304,7 @@
             mouse.y = y;
         };
         window.addEventListener('mousemove', updateInput);
-        window.addEventListener('touchstart', updateInput);
+        window.addEventListener('touchstart', updateInput, { passive: false });
         window.addEventListener('touchmove', (e) => { updateInput(e); e.preventDefault(); }, { passive: false });
 
         class Particle {
@@ -362,10 +362,26 @@
             vibrate([100, 50, 100]); // 폭주 발동 진동
         }
 
+        // 이전 단계에서 발생한 Syntax Error 수정 완료
         function togglePause() {
+            if (isGameOver) return;
+            isPaused = !isPaused;
+            if (!isPaused && player) player.lastShot = Date.now();
+        }
+
+        function requestReset() {
+            isGameOver = true; isPaused = false;
+            cancelAnimationFrame(animationId);
+            startScreen.classList.remove('hidden');
+            gameOverScreen.classList.add('hidden');
+            soundManager.play(300, 'sine', 0.2);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
             if (key === 'q') toggleFireMode();
             if (key === 'e') triggerSpecialMode();
-            if (key === 'r') isPaused = !isPaused;
+            if (key === 'r') togglePause();
             if (key === 'f') requestReset();
         });
 
@@ -377,14 +393,6 @@
             soundBtn.innerText = soundManager.enabled ? '🔊' : '🔇';
         };
         specialBtn.onclick = (e) => { e.stopPropagation(); triggerSpecialMode(); };
-
-        function requestReset() {
-            isGameOver = true; isPaused = false;
-            cancelAnimationFrame(animationId);
-            startScreen.classList.remove('hidden');
-            gameOverScreen.classList.add('hidden');
-            soundManager.play(300, 'sine', 0.2);
-        }
 
         class Player {
             constructor() {
@@ -625,7 +633,7 @@
         }
 
         startBtn.onclick = () => { startScreen.classList.add('hidden'); init(); animate(); };
-        restartBtn.onclick = () => { gameOverScreen.classList.remove('hidden'); init(); animate(); };
+        restartBtn.onclick = () => { gameOverScreen.classList.add('hidden'); init(); animate(); };
     </script>
 </body>
 </html>
